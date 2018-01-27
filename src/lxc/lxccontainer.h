@@ -945,6 +945,9 @@ struct migrate_opts {
 	 * in which the desired feature checks can be encoded.
 	 */
 	uint64_t features_to_check;
+
+	// AW: add policy parameter for custom CRIU
+	char *policy;
 };
 
 struct lxc_console_log {

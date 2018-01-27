@@ -301,6 +301,9 @@ static void exec_criu(struct criu_opts *opts)
 	DECLARE_ARG(opts->user->directory);
 	DECLARE_ARG("-o");
 	DECLARE_ARG(log);
+	DECLARE_ARG("--policy");
+	DECLARE_ARG(opts->user->policy);
+
 
 	for (i = 0; i < cgroup_num_hierarchies(); i++) {
 		char **controllers = NULL, *fullname;

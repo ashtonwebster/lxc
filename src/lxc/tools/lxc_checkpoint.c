@@ -38,9 +38,10 @@ static bool do_restore = false;
 static bool daemonize_set = false;
 static bool pre_dump = false;
 static char *predump_dir = NULL;
+static char *policy = NULL;
 
 #define OPT_PREDUMP_DIR OPT_USAGE + 1
-
+#define OPT_POLICY OPT_PREDUMP_DIR + 1
 static const struct option my_longopts[] = {
 	{"checkpoint-dir", required_argument, 0, 'D'},
 	{"stop", no_argument, 0, 's'},
@@ -50,6 +51,7 @@ static const struct option my_longopts[] = {
 	{"foreground", no_argument, 0, 'F'},
 	{"pre-dump", no_argument, 0, 'p'},
 	{"predump-dir", required_argument, 0, OPT_PREDUMP_DIR},
+	{"policy", required_argument, 0, OPT_POLICY},
 	LXC_COMMON_OPTIONS
 };
 
@@ -110,6 +112,11 @@ static int my_parser(struct lxc_arguments *args, int c, char *arg)
 		if (!predump_dir)
 			return -1;
 		break;
+	case OPT_POLICY:
+		policy = strdup(arg);
+		if (!policy)
+			return -1;
+		break;
 	}
 	return 0;
 }
@@ -138,6 +145,7 @@ Options :\n\
   -d, --daemon              Daemonize the container (default)\n\
   -F, --foreground          Start with the current tty attached to /dev/console\n\
   --rcfile=FILE             Load configuration file FILE\n\
+  --policy=FILE				Load with policy (AW added)\n\
 ",
 	.options   = my_longopts,
 	.parser    = my_parser,
@@ -163,6 +171,7 @@ static bool checkpoint(struct lxc_container *c)
 	opts.stop = stop;
 	opts.verbose = verbose;
 	opts.predump_dir = predump_dir;
+	opts.policy = policy;
 
 	if (pre_dump)
 		mode = MIGRATE_PRE_DUMP;
