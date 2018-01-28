@@ -260,6 +260,9 @@ static void exec_criu(struct criu_opts *opts)
 	DECLARE_ARG(opts->user->directory);
 	DECLARE_ARG("-o");
 	DECLARE_ARG(log);
+	DECLARE_ARG("--policy");
+	DECLARE_ARG(opts->user->policy);
+
 
 	for (i = 0; i < cgroup_num_hierarchies(); i++) {
 		char **controllers = NULL, *fullname;
@@ -579,7 +582,7 @@ static void exec_criu(struct criu_opts *opts)
 			pos += ret;
 	}
 
-	INFO("execing: %s", buf);
+	INFO("ASDFASDF AS;DLKFAHSHDGAIOSUHDYG execing: %s", buf);
 
 	/* before criu inits its log, it sometimes prints things to stdout/err;
 	 * let's be sure we capture that.

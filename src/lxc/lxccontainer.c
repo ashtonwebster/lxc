@@ -417,6 +417,24 @@ static rettype fnname(struct lxc_container *c, t1 a1, t2 a2, t3 a3)	\
 	return ret;							\
 }
 
+#define WRAP_API_4(rettype, fnname, t1, t2, t3, t4)				\
+static rettype fnname(struct lxc_container *c, t1 a1, t2 a2, t3 a3, t4 a4)	\
+{									\
+	rettype ret;							\
+	bool reset_config = false;					\
+									\
+	if (!current_config && c && c->lxc_conf) {			\
+		current_config = c->lxc_conf;				\
+		reset_config = true;					\
+	}								\
+									\
+	ret = do_##fnname(c, a1, a2, a3, a4);				\
+	if (reset_config)						\
+		current_config = NULL;					\
+									\
+	return ret;							\
+}
+
 WRAP_API(bool, lxcapi_is_defined)
 
 static const char *do_lxcapi_state(struct lxc_container *c)
@@ -3975,6 +3993,7 @@ static int do_lxcapi_migrate(struct lxc_container *c, unsigned int cmd,
 	 * sure that the stuff on the end is zero, i.e. that they didn't ask us
 	 * to do anything special.
 	 */
+	INFO("valid_opts policy BEFORE: %s", valid_opts->policy);
 	if (size > sizeof(*opts)) {
 		unsigned char *addr;
 		unsigned char *end;
@@ -4000,6 +4019,7 @@ static int do_lxcapi_migrate(struct lxc_container *c, unsigned int cmd,
 		memset(valid_opts, 0, sizeof(*opts));
 		memcpy(valid_opts, opts, size);
 	}
+	INFO("valid_opts policy AFTER: %s", valid_opts->policy);
 
 	switch (cmd) {
 	case MIGRATE_PRE_DUMP:
@@ -4036,7 +4056,7 @@ static int do_lxcapi_migrate(struct lxc_container *c, unsigned int cmd,
 
 WRAP_API_3(int, lxcapi_migrate, unsigned int, struct migrate_opts *, unsigned int)
 
-static bool do_lxcapi_checkpoint(struct lxc_container *c, char *directory, bool stop, bool verbose)
+static bool do_lxcapi_checkpoint(struct lxc_container *c, char *directory, bool stop, bool verbose, char *policy)
 {
 	struct migrate_opts opts;
 
@@ -4045,11 +4065,13 @@ static bool do_lxcapi_checkpoint(struct lxc_container *c, char *directory, bool 
 	opts.directory = directory;
 	opts.stop = stop;
 	opts.verbose = verbose;
+	opts.policy = policy;
+	INFO("policy in do_lxcapi_checkpoint: %s\n", opts.policy);
 
 	return !do_lxcapi_migrate(c, MIGRATE_DUMP, &opts, sizeof(opts));
 }
 
-WRAP_API_3(bool, lxcapi_checkpoint, char *, bool, bool)
+WRAP_API_4(bool, lxcapi_checkpoint, char *, bool, bool, char *)
 
 static bool do_lxcapi_restore(struct lxc_container *c, char *directory, bool verbose)
 {

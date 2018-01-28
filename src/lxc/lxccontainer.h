@@ -778,7 +778,7 @@ struct lxc_container {
 	 * \return \c true on success, else \c false.
 	 * present at compile time).
 	 */
-	bool (*checkpoint)(struct lxc_container *c, char *directory, bool stop, bool verbose);
+	bool (*checkpoint)(struct lxc_container *c, char *directory, bool stop, bool verbose, char *policy);
 
 	/*!
 	 * \brief Restore a container from a checkpoint.
@@ -908,6 +908,17 @@ struct migrate_opts {
 	 * which at this time is 1MB.
 	 */
 	uint64_t ghost_limit;
+
+	/* Some features cannot be checked by comparing the CRIU version.
+	 * Features like dirty page tracking or userfaultfd depend on
+	 * the architecture/kernel/criu combination. This is a bitmask
+	 * in which the desired feature checks can be encoded.
+	 */
+	uint64_t features_to_check;
+
+	// AW: add policy parameter for custom CRIU
+	char *policy;
+
 };
 
 /*!
