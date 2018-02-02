@@ -52,11 +52,11 @@
 #endif
 
 #define CRIU_VERSION		"2.0"
-
+#define CRIU_IN_FLIGHT_SUPPORT "2.4"
 #define CRIU_GITID_VERSION	"2.0"
 #define CRIU_GITID_PATCHLEVEL	0
 
-#define CRIU_IN_FLIGHT_SUPPORT	"2.4"
+
 #define CRIU_EXTERNAL_NOT_VETH	"2.8"
 
 lxc_log_define(lxc_criu, lxc);
@@ -301,8 +301,14 @@ static void exec_criu(struct criu_opts *opts)
 	DECLARE_ARG(opts->user->directory);
 	DECLARE_ARG("-o");
 	DECLARE_ARG(log);
-	DECLARE_ARG("--policy");
-	DECLARE_ARG(opts->user->policy);
+	if (opts->user->policy) {
+		DECLARE_ARG("--policy");
+		DECLARE_ARG(opts->user->policy);
+	}
+	if (opts->user->base_path) {
+		DECLARE_ARG("--base-path");
+		DECLARE_ARG(opts->user->base_path);
+	}
 
 
 	for (i = 0; i < cgroup_num_hierarchies(); i++) {

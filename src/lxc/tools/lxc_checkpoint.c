@@ -39,9 +39,12 @@ static bool daemonize_set = false;
 static bool pre_dump = false;
 static char *predump_dir = NULL;
 static char *policy = NULL;
+static char *base_path = NULL;
 
 #define OPT_PREDUMP_DIR OPT_USAGE + 1
 #define OPT_POLICY OPT_PREDUMP_DIR + 1
+#define OPT_BASE_PATH OPT_POLICY + 1
+
 static const struct option my_longopts[] = {
 	{"checkpoint-dir", required_argument, 0, 'D'},
 	{"stop", no_argument, 0, 's'},
@@ -52,6 +55,7 @@ static const struct option my_longopts[] = {
 	{"pre-dump", no_argument, 0, 'p'},
 	{"predump-dir", required_argument, 0, OPT_PREDUMP_DIR},
 	{"policy", required_argument, 0, OPT_POLICY},
+	{"base-path", required_argument, 0, OPT_BASE_PATH},
 	LXC_COMMON_OPTIONS
 };
 
@@ -117,6 +121,11 @@ static int my_parser(struct lxc_arguments *args, int c, char *arg)
 		if (!policy)
 			return -1;
 		break;
+	case OPT_BASE_PATH:
+		base_path = strdup(arg);
+		if (!base_path)
+			return -1;
+		break;
 	}
 	return 0;
 }
@@ -145,7 +154,8 @@ Options :\n\
   -d, --daemon              Daemonize the container (default)\n\
   -F, --foreground          Start with the current tty attached to /dev/console\n\
   --rcfile=FILE             Load configuration file FILE\n\
-  --policy=FILE				Load with policy (AW added)\n\
+  --policy=FILE				Load with policy (dump only, AW added)\n\
+  --base-path=FILE 			Load with base path (restore only ,AW added)\n\
 ",
 	.options   = my_longopts,
 	.parser    = my_parser,
@@ -172,6 +182,7 @@ static bool checkpoint(struct lxc_container *c)
 	opts.verbose = verbose;
 	opts.predump_dir = predump_dir;
 	opts.policy = policy;
+	opts.ghost_limit = 9999999999;
 
 	if (pre_dump)
 		mode = MIGRATE_PRE_DUMP;
@@ -193,13 +204,19 @@ static bool checkpoint(struct lxc_container *c)
 
 static bool restore_finalize(struct lxc_container *c)
 {
-	bool ret = c->restore(c, checkpoint_dir, verbose);
-	if (!ret) {
+	struct migrate_opts opts;
+	memset(&opts, 0, sizeof(opts));
+	opts.directory = checkpoint_dir;
+	opts.verbose = verbose;
+	opts.base_path = base_path;
+
+	bool ret = c->migrate(c, MIGRATE_RESTORE, &opts, sizeof(opts));
+	if (ret) {
 		fprintf(stderr, "Restoring %s failed.\n", my_args.name);
 	}
 
 	lxc_container_put(c);
-	return ret;
+	return true;
 }
 
 static bool restore(struct lxc_container *c)

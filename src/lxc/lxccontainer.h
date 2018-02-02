@@ -948,6 +948,7 @@ struct migrate_opts {
 
 	// AW: add policy parameter for custom CRIU
 	char *policy;
+	char *base_path;
 };
 
 struct lxc_console_log {
